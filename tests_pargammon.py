@@ -7,6 +7,7 @@ from random import randrange, seed, getstate, setstate
 
 AZAR = 75 # Semilla para el random
 
+
 class Jugada(object):
     def __init__(self, movs, puntos):
         self.MOVS = movs
@@ -71,7 +72,8 @@ class Pargamon(object):
         self.dados = [randrange(6) + 1 for _ in range(self.D)]
         self.JUGADAS += 1
         self.TURNO = (self.JUGADAS-1) % len(self.FICHAS)
-        self.PUNTUACIONES = self.calcularPuntos(self.TABLERO)
+        self.actualziarPuntos()
+        self.buscarJugadas(0, self.TABLERO)
         return False
     
 
@@ -107,13 +109,13 @@ class Pargamon(object):
                     saltos = self.dados[i]
                     col = ord(char) - 65
                     self.moverFicha(col, col+saltos, self.TABLERO)
-            self.actualizarPuntos()
             print(movimientos_invalidos)
             return None
 
 
     def validarJugada(self, colI, saltos):
         colF = colI + saltos
+        print("COLF: ", colF)
         ficha_turno = self.FICHAS[self.TURNO]
         if colI > self.N | colI < 0:
             print("Fuera de rango")
@@ -127,6 +129,8 @@ class Pargamon(object):
         elif colF > self.N:
             print("Salto fuera del tablero")
             return False
+        elif colF == self.N:
+            return True
         elif len(self.TABLERO[colF]) > 1:
             if self.TABLERO[colF][0] != ficha_turno:
                 print("Ocupado")
@@ -135,14 +139,15 @@ class Pargamon(object):
             return True
 
     def moverFicha(self, ind_colI, ind_colF, tablero):
-        colI = tablero[ind_colI]
-        colF = tablero[ind_colF]
-
         try:
+            colI = tablero[ind_colI]
+
             if ind_colF == self.N:
                 colI.pop()
                 self.FICHAS_SACADAS[self.TURNO] += 1
                 return
+          
+            colF = tablero[ind_colF]
                 
             if len(colF) == 1:
                 if colF[0] != colI[0]:
@@ -157,18 +162,21 @@ class Pargamon(object):
             return e
 
     
-    def calcularPuntos(self, tablero):
-        puntuaciones = []
-        for i in range(len(self.FICHAS)):
-            puntuaciones.append(3 * (self.N+1) * (self.FICHAS_SACADAS[i]))
+    def calcularPuntos(self, tablero, jugador): # Jugador // Turno [0, n-1 jugadores]
+        puntos = 0
+        puntos += (3 * (self.N+1) * (self.FICHAS_SACADAS[jugador]))
         for col_i in range(self.N):
             col = tablero[col_i]
-            for i in range(len(self.FICHAS)):
-                nC = col.count(self.FICHAS[i])
-                aC = 2 if nC > 1 else 1
-                jC = col_i+1
-                puntuaciones[i] += (nC*aC*jC)
-        return puntuaciones
+            nC = col.count(self.FICHAS[jugador])
+            aC = 2 if nC > 1 else 1
+            jC = col_i+1
+            puntos += (nC*aC*jC)
+        return puntos
+    
+    def actualziarPuntos(self):
+        for i in range(len(self.FICHAS)):
+            self.PUNTUACIONES[i] = self.calcularPuntos(self.TABLERO, i)
+            return
 
 
     def copiarTablero(self, tablero):
@@ -189,8 +197,8 @@ class Pargamon(object):
             self.TURNO
         )
         self.historial.append(estado)
-
-
+        return
+    
     def deshacer(self, pasos):
         if pasos <= 0:
             print("Número de pasos inválido.")
@@ -215,6 +223,7 @@ class Pargamon(object):
             
         else:
             print("ERROR: No se ha podido recuperar el estado.")
+        return
 
 
     def buscarJugadas(self, n_dado, tablero, txt_jugadas = ""):
@@ -225,49 +234,53 @@ class Pargamon(object):
         else:
             tablero_sim = tablero
         if n_dado == self.D:
-            #puntuacion = (self.calcularPuntos(tablero_sim) - self.calcularPuntos(self.TABLERO))
-            puntuacion = 1
-            txt_jugadas += '@'
-            puntuacion = 0
-            return Jugada(txt_jugadas, puntuacion)
-        else:
-            dado = self.dados[n_dado]
-            for i_col in range(self.N):
-                print(self.validarJugada(i_col, dado), " /", i_col)
-                if self.validarJugada(i_col, dado):
-                    txt_jugadas += chr(i_col + 65)
-                    jugada = self.buscarJugadas(n_dado + 1, tablero_sim, txt_jugadas)
-                    print(jugada)
-                else:
-                    continue
+            puntuacion = (self.calcularPuntos(tablero_sim, self.TURNO) - self.calcularPuntos(self.TABLERO, self.TURNO))
+            self.JUGADAS_POSIBLES.append(Jugada(txt_jugadas, puntuacion))
+            return
+        
+        dado = self.dados[n_dado]
+        for i_col in range(self.N):
+            if self.validarJugada(i_col, dado):
+                tablero_temp = self.copiarTablero(tablero_sim)
+                self.moverFicha(i_col, i_col + dado, tablero_temp)
+                self.buscarJugadas(n_dado + 1, tablero_temp, txt_jugadas + chr(i_col + 65))
+        
+        self.buscarJugadas(n_dado + 1, tablero_sim, txt_jugadas + '@')
+        return
 
-
-# def main():
-#     seed(AZAR)
-#     print("*** PARGAMMON ***")
-#     #params = map(int, input("Numero de columnas, fichas y dados = ").split())
-#     juego = Pargamon(*[10, 5,3])
-#     finPartida = juego.cambiar_turno()
-#     print(juego)
-#     while not finPartida:        
-#         jugada = juego.jugar(input("Introduce tu jugada: "))
-#         while jugada != None:
-#             print(jugada)
-#             jugada = juego.jugar(input("Introduce tu jugada: "))
-#         finPartida = juego.cambiar_turno()
-#         print(juego)
-# main()
-
-juego = Pargamon(*[10, 5,3])
-finPartida = juego.cambiar_turno()
-print(juego)
-while not finPartida:        
-    print(juego.dados)
-    juego.buscarJugadas(0, juego.TABLERO)
-    print(juego.JUGADAS_POSIBLES)
-    jugada = juego.jugar(input("Introduce tu jugada: "))
-    while jugada != None:
-        print(jugada)
-        jugada = juego.jugar(input("Introduce tu jugada: "))
+def main():
+    seed(AZAR)
+    print("*** PARGAMMON ***")
+    #params = map(int, input("Numero de columnas, fichas y dados = ").split())
+    juego = Pargamon(*[10, 5,3])
     finPartida = juego.cambiar_turno()
     print(juego)
+    while not finPartida:        
+        jugada = juego.jugar(input("Introduce tu jugada: "))
+        while jugada != None:
+            print(jugada)
+            jugada = juego.jugar(input("Introduce tu jugada: "))
+        finPartida = juego.cambiar_turno()
+        print(juego)
+main()
+
+# seed(AZAR)
+# juego = Pargamon(*[10, 5,3])
+# finPartida = juego.cambiar_turno()
+# print(juego)
+# while not finPartida:        
+#     print(juego.dados)
+#     juego.buscarJugadas(0, juego.TABLERO)
+#     # print(juego.JUGADAS_POSIBLES)
+#     for jugada_valida in juego.JUGADAS_POSIBLES:
+#         print((jugada_valida.MOVS, jugada_valida.PUNTOS))
+#     print("--- Ordenadas ---")
+#     juego.JUGADAS_POSIBLES.sort(reverse=1)
+#     for jugada_valida in juego.JUGADAS_POSIBLES:
+#         print((jugada_valida.MOVS, jugada_valida.PUNTOS))
+#     jugada = juego.jugar(input("Introduce tu jugada: "))
+#     while jugada != None:
+#         print(jugada)
+#         jugada = juego.jugar(input("Introduce tu jugada: "))
+#     finPartida = juego.cambiar_turno()
+#     print(juego)
