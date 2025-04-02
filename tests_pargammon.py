@@ -112,9 +112,27 @@ class Pargamon(object):
             return None
 
 
-    def validarJugada(self, txt_jugada: str):
-        pass
-
+    def validarJugada(self, colI, saltos):
+        colF = colI + saltos
+        ficha_turno = self.FICHAS[self.TURNO]
+        if colI > self.N | colI < 0:
+            print("Fuera de rango")
+            return False
+        elif len(self.TABLERO[colI]) == 0:
+            print("Vacío")
+            return False
+        elif self.TABLERO[colI][0] != ficha_turno:
+            print("No tiene fichas del jugador")
+            return False
+        elif colF > self.N:
+            print("Salto fuera del tablero")
+            return False
+        elif len(self.TABLERO[colF]) > 1:
+            if self.TABLERO[colF][0] != ficha_turno:
+                print("Ocupado")
+                return False
+        else:
+            return True
 
     def moverFicha(self, ind_colI, ind_colF, tablero):
         colI = tablero[ind_colI]
@@ -199,44 +217,57 @@ class Pargamon(object):
             print("ERROR: No se ha podido recuperar el estado.")
 
 
-    def buscarJugadas(self, n_dado, tablero, txt_jugadas):
-        dado = self.dados[n_dado]
+    def buscarJugadas(self, n_dado, tablero, txt_jugadas = ""):
+        print("Buscando jugada: ", n_dado)
         puntuacion = 0
         if n_dado == 0:
             tablero_sim = self.copiarTablero(self.TABLERO)
         else:
             tablero_sim = tablero
         if n_dado == self.D:
-            for i_col in range(self.N):
-                if self.validarJugada(i_col, dado):
-                    puntuacion += (self.calcularPuntos(tablero_sim) - self.calcularPuntos(self.TABLERO))
-                    return (txt_jugada,puntuacion)
-                else:
-                    continue
-            txt_jugada += '@'
+            #puntuacion = (self.calcularPuntos(tablero_sim) - self.calcularPuntos(self.TABLERO))
+            puntuacion = 1
+            txt_jugadas += '@'
             puntuacion = 0
-            return Jugada(txt_jugada, puntuacion)
+            return Jugada(txt_jugadas, puntuacion)
         else:
+            dado = self.dados[n_dado]
             for i_col in range(self.N):
+                print(self.validarJugada(i_col, dado), " /", i_col)
                 if self.validarJugada(i_col, dado):
-                    txt_jugada += chr(i_col + 65)
-                    return self.buscarJugadas(n_dado + 1, tablero_sim, txt_jugadas)
+                    txt_jugadas += chr(i_col + 65)
+                    jugada = self.buscarJugadas(n_dado + 1, tablero_sim, txt_jugadas)
+                    print(jugada)
                 else:
                     continue
 
 
-def main():
-    seed(AZAR)
-    print("*** PARGAMMON ***")
-    #params = map(int, input("Numero de columnas, fichas y dados = ").split())
-    juego = Pargamon(*[10, 5,3])
+# def main():
+#     seed(AZAR)
+#     print("*** PARGAMMON ***")
+#     #params = map(int, input("Numero de columnas, fichas y dados = ").split())
+#     juego = Pargamon(*[10, 5,3])
+#     finPartida = juego.cambiar_turno()
+#     print(juego)
+#     while not finPartida:        
+#         jugada = juego.jugar(input("Introduce tu jugada: "))
+#         while jugada != None:
+#             print(jugada)
+#             jugada = juego.jugar(input("Introduce tu jugada: "))
+#         finPartida = juego.cambiar_turno()
+#         print(juego)
+# main()
+
+juego = Pargamon(*[10, 5,3])
+finPartida = juego.cambiar_turno()
+print(juego)
+while not finPartida:        
+    print(juego.dados)
+    juego.buscarJugadas(0, juego.TABLERO)
+    print(juego.JUGADAS_POSIBLES)
+    jugada = juego.jugar(input("Introduce tu jugada: "))
+    while jugada != None:
+        print(jugada)
+        jugada = juego.jugar(input("Introduce tu jugada: "))
     finPartida = juego.cambiar_turno()
     print(juego)
-    while not finPartida:        
-        jugada = juego.jugar(input("Introduce tu jugada: "))
-        while jugada != None:
-            print(jugada)
-            jugada = juego.jugar(input("Introduce tu jugada: "))
-        finPartida = juego.cambiar_turno()
-        print(juego)
-main()
