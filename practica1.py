@@ -1,6 +1,7 @@
 #####################
 ##    PARGAMMON    ##
 ## ANGEL ROJO SANZ ##
+##        V2       ##
 #####################
 
 from random import randrange, seed, getstate, setstate
