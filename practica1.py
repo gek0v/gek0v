@@ -348,8 +348,8 @@ class Pargamon(object):
 def main():
     seed(AZAR)
     print("*** PARGAMMON ***")
-    #params = map(int, input("Numero de columnas, fichas y dados = ").split())
-    juego = Pargamon(*[10,5,3])
+    params = map(int, input("Numero de columnas, fichas y dados = ").split())
+    juego = Pargamon(*params)
     finPartida = juego.cambiar_turno()
     while not finPartida:
         print(juego)
