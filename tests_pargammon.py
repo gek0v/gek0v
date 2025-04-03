@@ -95,7 +95,7 @@ class Pargamon(object):
 
         # Comprueba si el jugador ha sacado todas las fichas del tablero
         if self.PUNTUACIONES[self.TURNO] == self.PUNTUACION_MAX:
-            print(f"Han ganado los {self.FICHAS[self.TURNO]}!")
+            print(f"\nHan ganado los {self.FICHAS[self.TURNO]}!")
             return True
         
         # Realiza una tirada de dados
@@ -168,7 +168,6 @@ class Pargamon(object):
             col = ord(char) - 65
             validacion = self.validarJugada(col, saltos, tablero_simulado)
             if validacion != True:
-                print("Char invalido: ", char)
                 # En caso de una jugada invalida devuelve el motivo
                 return validacion
             # Si la jugada es válida actualiza la copia del tablero para el siguiente movimiento
@@ -181,7 +180,6 @@ class Pargamon(object):
             saltos = self.dados[i]
             col = ord(char) - 65
             self.moverFicha(col, col+saltos, self.TABLERO)
-            print('A')
         return None
 
     # Requiere el número de columna inicial, los los saltos a dar (dado)
@@ -189,14 +187,12 @@ class Pargamon(object):
     def validarJugada(self, colI, saltos, tablero):
         colF = colI + saltos
         ficha_turno = self.FICHAS[self.TURNO]
-        if colI < 0 | colI > self.N:
-            return f"ERROR J2-M1"
+        if colF > self.N:
+            return f"ERROR J2-M3: Movimiento {chr(colI + 65)} -> {chr(colF + 65)}, columna destino fuera de rango."
         elif len(tablero[colI]) == 0:
             return f"ERROR J2-M2: Columna de origen {chr(colI + 65)} no tiene fichas del jugador"
         elif tablero[colI][0] != ficha_turno:
             return f"ERROR J2-M2: Columna de origen {chr(colI + 65)} no tiene fichas del jugador"
-        elif colF > self.N:
-            return f"ERROR J2-M3: Movimiento {chr(colI + 65)} -> {chr(colF + 65)}, columna destino fuera de rango."
         elif colF == self.N:
             return True
         elif len(tablero[colF]) > 1:
@@ -273,7 +269,7 @@ class Pargamon(object):
         self.historial.append(estado)
         return
     
-    # Carga
+    # Retrocede tantos estados como pasos indicados
     def deshacer(self, pasos):
         if pasos <= 0:
             print("Número de pasos inválido.")
@@ -281,9 +277,12 @@ class Pargamon(object):
         if pasos > len(self.historial):
             print("No se han realizado tantas jugadas.")
         
+        # Borra los estados posterirores
         self.historial = self.historial[0:-pasos]
+        # Carga el último estado
         estado_recuperado = self.historial[-1]
 
+        # Si existe el estado sustituye los valores actuales con los cargados
         if estado_recuperado:
             (tablero, puntuaciones, dados, jugadas, turno) = estado_recuperado
             self.TABLERO = tablero
@@ -291,10 +290,13 @@ class Pargamon(object):
             self.dados = dados
             self.JUGADAS = jugadas
             self.TURNO = turno
-            print(f"Se ha retrocedio a la jugada #{self.JUGADAS}.")
+
+            # Imprime el tablero recuperado y busca las jugadas posibles
             print(self)
             self.buscarJugadas(0, self.TABLERO)
             self.JUGADAS_POSIBLES.sort(reverse=1)
+
+            # Comprueba si el turno le pertenece a una máquina
             if self.TURNO in self.MAQUINAS_LISTAS:
                 movimiento = self.JUGADAS_POSIBLES[0].MOVS 
                 print("Jugada: ", movimiento)
@@ -308,13 +310,21 @@ class Pargamon(object):
         return None
 
 
+    # Función recursiva que valida todas las jugadas posibles con los dados y turno actual
+    # Requiere: Nº de dado [0:self.D], tablero con el que probar las jugadas y jugadas previas
+    # El jugador es el asociado al turno de la partida
     def buscarJugadas(self, n_dado, tablero, txt_jugadas = ""):
+        # Para el caso inicial copia el tablero de la partida
         if n_dado == 0:
             tablero_sim = self.copiarTablero(self.TABLERO)
         else:
             tablero_sim = tablero
 
+        # Con el caso final calcula el valor de la jugada y añade a la lista de posibles jugadas
+        # una instancia con sus características.
         if n_dado == self.D:
+            # PK -> Puntuacion total de los jugadores
+            # Valor -> 2 veces la puntuación del jugador - PK
             valor = 2 * self.calcularPuntos(tablero_sim, self.TURNO)
             pk = 0
             for jugador in range(len(self.FICHAS)):
@@ -324,12 +334,14 @@ class Pargamon(object):
             return
         
         dado = self.dados[n_dado]
+        # Prueba el dado con todas las columnas que contienen fichas del jugador
         for i_col in range(self.N):
             if self.validarJugada(i_col, dado, tablero_sim) == True:
                 tablero_temp = self.copiarTablero(tablero_sim)
                 self.moverFicha(i_col, i_col + dado, tablero_temp)
                 self.buscarJugadas(n_dado + 1, tablero_temp, txt_jugadas + chr(i_col + 65))
-        
+
+        # En caso de no encontrar jugadas posibles no usa el dado (@)
         self.buscarJugadas(n_dado + 1, tablero_sim, txt_jugadas + '@')
         return
 
@@ -339,13 +351,11 @@ def main():
     #params = map(int, input("Numero de columnas, fichas y dados = ").split())
     juego = Pargamon(*[10,5,3])
     finPartida = juego.cambiar_turno()
-    print(juego)
     while not finPartida:
+        print(juego)
         jugada = juego.jugar(input("Jugada: "))
         while jugada != None:
             print(jugada)
             jugada = juego.jugar(input("Jugada: "))
         finPartida = juego.cambiar_turno()
-        print(juego)
-        
 main()
