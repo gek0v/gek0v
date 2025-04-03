@@ -94,6 +94,7 @@ class Pargamon(object):
         self.JUGADAS_POSIBLES.clear()
         self.buscarJugadas(0, self.TABLERO)
         self.JUGADAS_POSIBLES.sort(reverse=True)
+
         if self.TURNO in self.MAQUINAS_LISTAS:
             print(self)
             movimiento = self.JUGADAS_POSIBLES[0].MOVS 
@@ -241,7 +242,6 @@ class Pargamon(object):
         if pasos > len(self.historial):
             print("No se han realizado tantas jugadas.")
 
-        estado_recuperado = None
         
         self.historial = self.historial[0:-pasos]
         estado_recuperado = self.historial[-1]
@@ -255,6 +255,17 @@ class Pargamon(object):
             self.JUGADAS = jugadas
             self.TURNO = turno
             print(f"Se ha retrocedio a la jugada #{self.JUGADAS}.")
+            print(self)
+            self.buscarJugadas(0, self.TABLERO)
+            self.JUGADAS_POSIBLES.sort(reverse=1)
+            if self.TURNO in self.MAQUINAS_LISTAS:
+                movimiento = self.JUGADAS_POSIBLES[0].MOVS 
+                print("Jugada: ", movimiento)
+                self.jugar(movimiento)
+            elif self.TURNO in self.MAQUINAS_TONTAS:
+                movimiento = choice(self.JUGADAS_POSIBLES).MOVS 
+                print("Jugada: ", movimiento)
+                self.jugar(movimiento)
         else:
             print("ERROR: No se ha podido recuperar el estado.")
         return None
