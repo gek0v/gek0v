@@ -118,14 +118,14 @@ class Pargamon(object):
         if self.TURNO in self.MAQUINAS_LISTAS:
             print(self)
             movimiento = self.JUGADAS_POSIBLES[0].MOVS 
-            print("Jugada: ", movimiento)
+            print("Jugada:", movimiento)
             self.jugar(movimiento)
             return self.cambiar_turno()
         # Máquina tonta: elige una jugada aleatoria de la lista
         elif self.TURNO in self.MAQUINAS_TONTAS:
             print(self)
             movimiento = choice(self.JUGADAS_POSIBLES).MOVS 
-            print("Jugada: ", movimiento)
+            print("Jugada:", movimiento)
             self.jugar(movimiento)
             return self.cambiar_turno()
         return False
@@ -213,12 +213,11 @@ class Pargamon(object):
         colF = tablero[ind_colF]
 
         # Copia una ficha de la columna de origen a la de destino
-        if len(colF) == 1:
+        if len(colF) >= 1:
             # Se come la ficha contraria
             if colF[0] != colI[0]:
                 # Retrocede la ficha contraria a la columna inicial
-                tablero[self.FICHAS.index(colF[0])].append(colF[0])
-                colF[0] = colI[0]
+                self.moverFicha(ind_colF, self.FICHAS.index(colF[0]), tablero)
             else:
                 colF.append(colI[0])
         else:
@@ -299,11 +298,11 @@ class Pargamon(object):
             # Comprueba si el turno le pertenece a una máquina
             if self.TURNO in self.MAQUINAS_LISTAS:
                 movimiento = self.JUGADAS_POSIBLES[0].MOVS 
-                print("Jugada: ", movimiento)
+                print("Jugada:", movimiento)
                 self.jugar(movimiento)
             elif self.TURNO in self.MAQUINAS_TONTAS:
                 movimiento = choice(self.JUGADAS_POSIBLES).MOVS 
-                print("Jugada: ", movimiento)
+                print("Jugada:", movimiento)
                 self.jugar(movimiento)
         else:
             print("ERROR: No se ha podido recuperar el estado.")
@@ -349,7 +348,7 @@ def main():
     seed(AZAR)
     print("*** PARGAMMON ***")
     params = map(int, input("Numero de columnas, fichas y dados = ").split())
-    juego = Pargamon(*params)
+    juego = Pargamon(*params, fichas="OXVS")
     finPartida = juego.cambiar_turno()
     while not finPartida:
         print(juego)
