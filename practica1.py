@@ -212,21 +212,19 @@ class Pargamon(object):
 
             # Saca la ficha del tablero
             if ind_colF == self.N:
-                colI.pop()
+                colI.pop(0)
                 return
             
+            # Mueve la ficha a la nueva columna
             colF = tablero[ind_colF]
-
-            # Copia una ficha de la columna de origen a la de destino
-            if len(colF) >= 1:
-                # Se come la ficha contraria
-                if colF[0] != colI[0]:
-                    # Retrocede la ficha contraria a la columna inicial
-                    self.moverFicha(ind_colF, self.FICHAS.index(colF[0]), tablero)
             colF.append(colI[0])
-            colI.pop()
-        except Exception as e:
-            return e
+            colI.pop(0)
+
+            # Si hay una ficha contraria la desplaza a su casilla de orgien
+            if (len(colF) == 2) & (colF[0] != colF[1]):
+                    self.moverFicha(ind_colF, self.FICHAS.index(colF[0]), tablero)
+        except Exception as err:
+            return err
 
     # Tablero a evaluar, Jugador -> [0, n-1 jugadores]
     def calcularPuntos(self, tablero, jugador):
