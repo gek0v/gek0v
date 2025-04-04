@@ -1,7 +1,11 @@
-#####################
-##    PARGAMMON    ##
-## ÁNGEL ROJO SANZ ##
-#####################
+"""
+Ángel Rojo Sanz - Pargammon
+
+Carácteristicas:
+    - Juego Manual y Automático
+    - Opción de deshacer (*)
+    - Multiples jugadores
+"""
 
 from random import randrange, seed, choice
 
@@ -10,8 +14,8 @@ AZAR = 75 # Semilla para el random
 
 class Jugada(object):
     def __init__(self, movs, valor):
-        self.MOVS = movs
-        self.VALOR = valor
+        self.MOVS = movs    # Entrada de la jugada: ABC / @A@ ...
+        self.VALOR = valor  # Valor de la jugada en base de la puntuación
 
     # Permite ordenar las jugadas mediante sort()
     def __eq__(self, otro):
@@ -90,6 +94,9 @@ class Pargamon(object):
 
 
     def cambiar_turno(self) -> bool:
+        # Guarda el estado actual para poder deshacer
+        self.guardarEstado()
+
         # Actualiza el marcador de puntos para todos los jugadores
         self.actualziarPuntos()
 
@@ -102,9 +109,6 @@ class Pargamon(object):
         self.dados = [randrange(6) + 1 for _ in range(self.D)]
         self.JUGADAS += 1
         self.TURNO = (self.JUGADAS-1) % len(self.FICHAS)
-
-        # Guarda el estado actual para poder deshacer
-        self.guardarEstado()
 
         # Actualiza y ordena la lista de posibles jugadas
         self.JUGADAS_POSIBLES.clear()
@@ -203,26 +207,26 @@ class Pargamon(object):
     # Requiere una validación previa de la jugada
     # Nº Columna Inicial, Nº Columna Destino, Tablero en el que realizar el movimiento
     def moverFicha(self, ind_colI, ind_colF, tablero):
-        colI = tablero[ind_colI]
+        try:
+            colI = tablero[ind_colI]
 
-        # Saca la ficha del tablero
-        if ind_colF == self.N:
-            colI.pop()
-            return
-        
-        colF = tablero[ind_colF]
+            # Saca la ficha del tablero
+            if ind_colF == self.N:
+                colI.pop()
+                return
+            
+            colF = tablero[ind_colF]
 
-        # Copia una ficha de la columna de origen a la de destino
-        if len(colF) >= 1:
-            # Se come la ficha contraria
-            if colF[0] != colI[0]:
-                # Retrocede la ficha contraria a la columna inicial
-                self.moverFicha(ind_colF, self.FICHAS.index(colF[0]), tablero)
-            else:
-                colF.append(colI[0])
-        else:
+            # Copia una ficha de la columna de origen a la de destino
+            if len(colF) >= 1:
+                # Se come la ficha contraria
+                if colF[0] != colI[0]:
+                    # Retrocede la ficha contraria a la columna inicial
+                    self.moverFicha(ind_colF, self.FICHAS.index(colF[0]), tablero)
             colF.append(colI[0])
-        colI.pop()
+            colI.pop()
+        except Exception as e:
+            return e
 
     # Tablero a evaluar, Jugador -> [0, n-1 jugadores]
     def calcularPuntos(self, tablero, jugador):
